@@ -57,7 +57,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 		// 
 		const data = await rest.put(
-			Routes.applicationGuildCommands('1317068960885379102', '1317067517973364836'),
+			Routes.applicationCommands('1317068960885379102', '1317067517973364836'),
 			{ body: commands },
 		);
 
