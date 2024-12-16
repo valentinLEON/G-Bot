@@ -2,7 +2,9 @@ const { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, Collectio
 const fs = require('node:fs');
 const path = require('node:path');
 const Sequelize = require('sequelize');
-const { token } = require('./config.json');
+
+const dotenv = require('dotenv');
+dotenv.config();
 
 const sequelize = new Sequelize('database', 'user', 'password', {
 	host: 'localhost',
@@ -48,7 +50,7 @@ for (const folder of commandFolders) {
 	}
 }
 
-const rest = new REST({ version: '10' }).setToken(token);
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
 	try {
@@ -127,4 +129,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	}
 });
 
-client.login(token);
+client.login(process.env.DISCORD_TOKEN);
