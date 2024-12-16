@@ -130,7 +130,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	const command = getInteraction(interaction);
 
 	const guild = interaction.guild;
-	const role = guild.roles.cache.find(role => role.name === 'Gay lord');
+	const role = guild.roles.cache.find(role => role.name === 'Gay Lord');
 
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);
