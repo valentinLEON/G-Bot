@@ -135,7 +135,7 @@ client.once(Events.ClientReady, async readyClient => {
 				const match = message.content.match(regex);
 				if (match) {
 					const usernameRegex = match[1];
-					const username = client.users.cache.get(usernameRegex.slice(0, -1)).globalName;
+					const username = client.users.cache.get(usernameRegex.slice(0, -1))?.globalName;
 					const index = message.content.indexOf("n°");
 					const char = "n°";
 					//TODO: maybe find next characters until space...
