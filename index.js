@@ -8,6 +8,15 @@ const dotenv = require('dotenv');
 dotenv.config();
 const soundPath = './sounds';
 
+const express = require('express');
+const app = express();
+const port = 3000;
+
+// Démarrer le serveur
+app.listen(port, () => {
+    console.log(`Le serveur keep-alive fonctionne sur le port ${port}`);
+});
+
 const sequelize = new Sequelize('database', 'user', 'password', {
 	host: 'localhost',
 	dialect: 'sqlite',
@@ -168,7 +177,6 @@ client.once(Events.ClientReady, async readyClient => {
 
 	console.log("Récupération des anciens messages");
 	const oldMessages = await getAllOldMessages(channel);
-	// console.log("old", oldMessages)
 	const oldMessagesToAdd = [];
 	members = members.map(x => x.user).filter(x => x.bot === false);
 	if (oldMessages) {
@@ -271,6 +279,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		kickGaylordRole(role);
 		handleGaylordCommand(interaction, command, user, role)
 		// playSound(guild);
+	} else if (command.data.name === 'rules') {
+		command.execute(interaction);
 	} else {
 		console.error(`[ERROR] No command matching ${command.name} was found.`);
 		interaction.reply(`Aucune commande pour : ${command.name} a été trouvée.`)
