@@ -1,4 +1,4 @@
-const { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, Collection } = require('discord.js');
+const { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, Collection, Options } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const Sequelize = require('sequelize');
@@ -6,7 +6,7 @@ const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSta
 
 const dotenv = require('dotenv');
 dotenv.config();
-const soundPath = './sounds'
+const soundPath = './sounds';
 
 const sequelize = new Sequelize('database', 'user', 'password', {
 	host: 'localhost',
@@ -31,7 +31,14 @@ const client = new Client({
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.MessageContent,
 		GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.GuildVoiceStates]
+		GatewayIntentBits.GuildVoiceStates,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.GuildPresences
+	],
+	makeCache: Options.cacheWithLimits({
+		GuildMemberManager: 5000, // Nombre de membres à mettre en cache
+	}),
 });
 
 const textCommands = [];
@@ -50,10 +57,32 @@ for (const file of commandFiles) {
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
+const removeDatabaseFile = () => {
+	const databaseFile = path.join(__dirname, 'database.sqlite');
+	fs.access(databaseFile, fs.constants.F_OK, (err) => {
+		if (err) {
+			console.error('Le fichier n\'existe pas ou n\'est pas accessible.');
+		} else {
+			fs.unlink(databaseFile, (err) => {
+				if (err) {
+					console.error('Erreur lors de la suppression du fichier :', err);
+				} else {
+					console.log('Suppression du fichier de database de quotes');
+				}
+			});
+		}
+	});
+}
+
+console.log("Remove previous database file");
+if (fs.existsSync("database.sqlite")) {
+	removeDatabaseFile();
+}
+
+
 (async () => {
 	try {
 		console.log(`Started refreshing ${textCommands.length} application (/) commands.`);
-		// mettre les values dans le .env
 		const data = await rest.put(
 			Routes.applicationCommands(process.env.DISCORD_APPID, process.env.DISCORD_GUILD),
 			{ body: textCommands },
@@ -115,6 +144,20 @@ const playSound = (guild) => {
 }
 
 client.once(Events.ClientReady, async readyClient => {
+	const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL);
+	const guild = client.guilds.cache.get(process.env.DISCORD_GUILD);
+	if (!guild) {
+		console.log('Guilde non trouvée !');
+		return;
+	}
+	let members = [];
+	try {
+		members = await guild.members.fetch();
+		console.log(`Nombre de membres dans le serveur : ${members.size}`);
+	} catch (error) {
+		console.error('Erreur lors de la récupération des membres:', error);
+	}
+
 	console.log("Init SQLITE if file not exists");
 	if (!fs.existsSync("database.sqlite")) {
 		await Users.create({
@@ -122,28 +165,30 @@ client.once(Events.ClientReady, async readyClient => {
 			usage_count: 0
 		});
 	}
-	const channel = client.channels.cache.get(process.env.DISCORD_CHANNEL);
 
 	console.log("Récupération des anciens messages");
 	const oldMessages = await getAllOldMessages(channel);
+	// console.log("old", oldMessages)
 	const oldMessagesToAdd = [];
-
+	members = members.map(x => x.user).filter(x => x.bot === false);
 	if (oldMessages) {
 		try {
 			oldMessages.forEach(async message => {
 				const regex = /@([^@]+) n°/;
 				const match = message.content.match(regex);
 				if (match) {
-					const usernameRegex = match[1];
-					const username = client.users.cache.get(usernameRegex.slice(0, -1))?.globalName;
-					const index = message.content.indexOf("n°");
-					const char = "n°";
-					//TODO: maybe find next characters until space...
-					const count = message.content.slice(index + char.length, index + char.length + 3).trim();
-					oldMessagesToAdd.push({
-						username: username,
-						usage_count: count
-					});
+					const usernameRegex = match[1].replace(/[<>]/g, '').trim().toString();
+					if (usernameRegex) {
+						const member = members.filter(x => x.id == usernameRegex)[0];
+						const username = member?.globalName ? member?.globalName : member?.username;
+						const index = message.content.indexOf("n°");
+						const char = "n°";
+						const count = message.content.slice(index + char.length, index + char.length + 3).trim();
+						oldMessagesToAdd.push({
+							username: username,
+							usage_count: count
+						});
+					}
 				}
 			});
 			oldMessagesToAdd.sort((a, b) => a.usage_count - b.usage_count);
@@ -188,7 +233,6 @@ const handleStatsCommand = async (interaction, command) => {
 				username: targetUser.user.globalName
 			}
 		})
-		console.log("targetUser", targetUser)
 		command.execute(interaction, targetUser.user.globalName, res, true);
 	} else {
 		const res = await Users.findAll({
