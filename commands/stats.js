@@ -26,7 +26,7 @@ module.exports = {
             } catch (error) {
                 console.error('Impossible de supprimer le message des stats : ', error);
             }
-        }, 10000);
+        }, 60000);
     },
 };
 

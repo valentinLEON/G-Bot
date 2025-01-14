@@ -29,6 +29,6 @@ module.exports = {
             } catch (error) {
                 console.error('Impossible de supprimer le message des règles : ', error);
             }
-        }, 10000);
+        }, 60000);
     },
 };

@@ -43,7 +43,8 @@ const client = new Client({
 		GatewayIntentBits.GuildVoiceStates,
 		GatewayIntentBits.GuildMembers,
 		GatewayIntentBits.DirectMessages,
-		GatewayIntentBits.GuildPresences
+		GatewayIntentBits.GuildPresences,
+		GatewayIntentBits.GuildMessageReactions
 	],
 	makeCache: Options.cacheWithLimits({
 		GuildMemberManager: 5000, // Nombre de membres à mettre en cache
