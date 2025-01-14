@@ -20,6 +20,15 @@ module.exports = {
             .setTimestamp();
 
         // Envoi de l'embed
-        await interaction.reply({ embeds: [embed] });
+        const sentMessage = await interaction.reply({ embeds: [embed] });
+
+        setTimeout(async () => {
+            try {
+                await sentMessage.delete();
+                console.log("Message des règles supprimé");
+            } catch (error) {
+                console.error('Impossible de supprimer le message des règles : ', error);
+            }
+        }, 10000);
     },
 };

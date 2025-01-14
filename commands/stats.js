@@ -12,11 +12,21 @@ module.exports = {
 		)
     ,
     async execute(interaction, targetUser, count, isSpecific) {
+        let sentMessage = '';
         if (isSpecific) {
-            await interaction.reply(`${targetUser} a pu se faire gaylorder ${count} fois`);
+            sentMessage = await interaction.reply(`${targetUser} a pu se faire gaylorder ${count} fois`);
         } else {
-            await interaction.reply(`Le plus gros gaylord est ${targetUser} avec ${count} gaylords`);
+            sentMessage = await interaction.reply(`Le plus gros gaylord est ${targetUser} avec ${count} gaylords`);
         }
+
+        setTimeout(async () => {
+            try {
+                await sentMessage.delete();
+                console.log("Message des statistiques supprimé");
+            } catch (error) {
+                console.error('Impossible de supprimer le message des stats : ', error);
+            }
+        }, 10000);
     },
 };
 
