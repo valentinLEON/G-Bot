@@ -1,8 +1,9 @@
-const { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, Collection, Options } = require('discord.js');
+const { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, Collection, Options, userMention, roleMention } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const Sequelize = require('sequelize');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
+const moment = require("moment")
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -14,7 +15,7 @@ const port = 3000;
 
 // Démarrer le serveur
 app.listen(port, () => {
-    console.log(`Le serveur keep-alive fonctionne sur le port ${port}`);
+	console.log(`Le serveur keep-alive fonctionne sur le port ${port}`);
 });
 
 const sequelize = new Sequelize('database', 'user', 'password', {
@@ -179,6 +180,10 @@ client.once(Events.ClientReady, async readyClient => {
 	console.log("Récupération des anciens messages");
 	const oldMessages = await getAllOldMessages(channel);
 	const oldMessagesToAdd = [];
+
+	console.log(`----- Lancement du random gaylord -----`);
+	triggerRandomGaylord(members, guild);
+
 	members = members.map(x => x.user).filter(x => x.bot === false);
 	if (oldMessages) {
 		try {
@@ -210,19 +215,64 @@ client.once(Events.ClientReady, async readyClient => {
 	console.log(`Ready! Bot: ${readyClient.user.tag}`);
 });
 
+const triggerRandomGaylord = (members, guild) => {
+	const checkInterval = 10 * 1000;
+	const GAYLORD_ROLE_ID = 1192208207565820017;
+	setInterval(async () => {
+		const now = new Date();
+		const currentHour = now.getHours();
+		const currentMinute = now.getMinutes();
+
+		// Vérifie si l'heure actuelle correspond à l'heure cible
+		if (currentHour === 19 && currentMinute === 0) {
+			try {
+				const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
+				const lastElementGaylord = await Users.findOne({
+					order: [['createdAt', 'DESC']],
+				});
+				let lastDateGaylord = lastElementGaylord.dataValues.createdAt;
+				if (checkIsWeek(lastDateGaylord)) {
+					const usersFiltered = members.filter(member => channel.members.has(member.id) && !member.user.bot);
+					const randomMember = usersFiltered.random();
+					const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
+					kickGaylordRole(currentRole, channel);
+					// add new gaylord
+					const newUser = addNewGaylord(randomMember, currentRole);
+					const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
+					Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.id)} n°${newUser.usage_count}`
+					await channel.send(message);
+				}
+			} catch (error) {
+				console.error('Erreur lors de l\'envoi du message quotidien :', error);
+			}
+		}
+	}, checkInterval);
+}
+
+const checkIsWeek = (date) => {
+	const now = Date.now();
+	const dateC = new Date(date);
+	var diff = moment(now).diff(dateC, 'days');
+	return diff >= 7;
+}
+
+const addNewGaylord = async (user, role) => {
+	await user.roles.add(role);
+	// get all gaylords and order by usage count asc
+	const res = await Users.findAll({ order: [['usage_count', 'ASC']] });
+	const lastElement = res[res.length - 1];
+	return await Users.create({
+		username: user.user.globalName,
+		usage_count: lastElement.usage_count + 1
+	});
+}
+
 const handleGaylordCommand = async (interaction, command, user, role) => {
 	try {
-		await user.roles.add(role);
-		// get all gaylords and order by usage count asc
-		const res = await Users.findAll({ order: [['usage_count', 'ASC']] });
-		const lastElement = res[res.length - 1];
-		const newUser = await Users.create({
-			username: user.user.globalName,
-			usage_count: lastElement.usage_count + 1
-		});
+		const newUser = await addNewGaylord(user);
 		const citation = interaction.options.getString('message');
-		console.log("------ Add new user ------");
 		await command.execute(interaction, user, citation, role, newUser.usage_count);
+		console.log("------ Add new user ------");
 	} catch (error) {
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {
@@ -257,9 +307,9 @@ const handleStatsCommand = async (interaction, command) => {
 	}
 }
 
-const kickGaylordRole = async (role) => {
+const kickGaylordRole = async (role, channel) => {
 	if (!role) {
-		await interaction.reply("Pas de rôle gaylord existant");
+		await channel.send("Pas de rôle gaylord existant");
 	}
 	// suppression du role pour tout le monde avant de le mettre à celui qui le mérite
 	role.members.forEach((member, i) => {
@@ -278,7 +328,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		const guild = interaction.guild;
 		const role = guild.roles.cache.find(role => role.name === 'Gay Lord');
 		kickGaylordRole(role);
-		handleGaylordCommand(interaction, command, user, role)
+		handleGaylordCommand(interaction, command, user, role);
 		// playSound(guild);
 	} else if (command.data.name === 'rules') {
 		command.execute(interaction);
