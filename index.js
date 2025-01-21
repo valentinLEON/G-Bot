@@ -216,7 +216,7 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	const checkInterval = 10 * 1000;
+	const checkInterval = 60 * 1000;
 	const GAYLORD_ROLE_ID = 1192208207565820017;
 	setInterval(async () => {
 		const now = new Date();
@@ -232,6 +232,7 @@ const triggerRandomGaylord = (members, guild) => {
 				});
 				let lastDateGaylord = lastElementGaylord.dataValues.createdAt;
 				if (checkIsWeek(lastDateGaylord)) {
+					console.log(`---- Last gaylord was ${lastElementGaylord.username} ----`)
 					const usersFiltered = members.filter(member => channel.members.has(member.id) && !member.user.bot);
 					const randomMember = usersFiltered.random();
 					const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
