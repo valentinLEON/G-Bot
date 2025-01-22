@@ -270,7 +270,7 @@ const addNewGaylord = async (user, role) => {
 
 const handleGaylordCommand = async (interaction, command, user, role) => {
 	try {
-		const newUser = await addNewGaylord(user);
+		const newUser = await addNewGaylord(user, role);
 		const citation = interaction.options.getString('message');
 		await command.execute(interaction, user, citation, role, newUser.usage_count);
 		console.log("------ Add new user ------");
