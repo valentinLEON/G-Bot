@@ -217,7 +217,7 @@ client.once(Events.ClientReady, async readyClient => {
 
 const triggerRandomGaylord = (members, guild) => {
 	const checkInterval = 60 * 1000;
-	const GAYLORD_ROLE_ID = 1192208207565820017;
+	const GAYLORD_ROLE_ID = "1192208207565820017";
 	setInterval(async () => {
 		const now = new Date();
 		const currentHour = now.getHours();
@@ -238,9 +238,9 @@ const triggerRandomGaylord = (members, guild) => {
 					const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
 					kickGaylordRole(currentRole, channel);
 					// add new gaylord
-					const newUser = addNewGaylord(randomMember, currentRole);
+					const { res } = await addNewGaylord(randomMember, currentRole);
 					const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
-					Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.id)} n°${newUser.usage_count}`
+					Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${res}`
 					await channel.send(message);
 				}
 			} catch (error) {
@@ -258,19 +258,23 @@ const checkIsWeek = (date) => {
 }
 
 const addNewGaylord = async (user, role) => {
-	await user.roles.add(role);
-	// get all gaylords and order by usage count asc
-	const res = await Users.findAll({ order: [['usage_count', 'ASC']] });
-	const lastElement = res[res.length - 1];
-	return await Users.create({
-		username: user.user.globalName,
-		usage_count: lastElement.usage_count + 1
-	});
+	try {
+		await user.roles.add(role);
+		// get all gaylords and order by usage count asc
+		const res = await Users.count();
+		const newUser = await Users.create({
+			username: user.user.globalName,
+			usage_count: res + 1
+		});
+		return { res, newUser };
+	} catch (error) {
+		console.error('Erreur lors de l\'ajout du nouveau gaylord :', error);
+	}
 }
 
 const handleGaylordCommand = async (interaction, command, user, role) => {
 	try {
-		const newUser = await addNewGaylord(user, role);
+		const { newUser } = await addNewGaylord(user, role);
 		const citation = interaction.options.getString('message');
 		await command.execute(interaction, user, citation, role, newUser.usage_count);
 		console.log("------ Add new user ------");
