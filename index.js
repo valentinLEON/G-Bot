@@ -276,7 +276,7 @@ const handleGaylordCommand = async (interaction, command, user, role) => {
 	try {
 		const { newUser } = await addNewGaylord(user, role);
 		const citation = interaction.options.getString('message');
-		await command.execute(interaction, user, citation, role, newUser.usage_count);
+		await command.execute(interaction, user, citation, role, newUser.id);
 		console.log("------ Add new user ------");
 	} catch (error) {
 		console.error(error);
