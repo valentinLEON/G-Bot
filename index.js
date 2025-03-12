@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Sequelize = require('sequelize');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
-const moment = require("moment")
+const moment = require("moment");
+const cron = require("node-cron");
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -216,38 +217,34 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	const checkInterval = 60 * 1000;
-	const GAYLORD_ROLE_ID = "1192208207565820017";
-	setInterval(async () => {
-		const now = new Date();
-		const currentHour = now.getHours();
-		const currentMinute = now.getMinutes();
+	cron.schedule("0 19 * * *", async () => { // execute it each day at 19h
+		console.log("Trigger random gaylord");
+		const GAYLORD_ROLE_ID = "1192208207565820017";
 
-		// Vérifie si l'heure actuelle correspond à l'heure cible
-		if (currentHour === 19 && currentMinute === 0) {
-			try {
-				const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
-				const lastElementGaylord = await Users.findOne({
-					order: [['createdAt', 'DESC']],
-				});
-				let lastDateGaylord = lastElementGaylord.dataValues.createdAt;
-				if (checkIsWeek(lastDateGaylord)) {
-					console.log(`---- Last gaylord was ${lastElementGaylord.username} ----`)
-					const usersFiltered = members.filter(member => channel.members.has(member.id) && !member.user.bot);
-					const randomMember = usersFiltered.random();
-					const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
-					kickGaylordRole(currentRole, channel);
-					// add new gaylord
-					const { res } = await addNewGaylord(randomMember, currentRole);
-					const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
-					Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${res}`
-					await channel.send(message);
-				}
-			} catch (error) {
-				console.error('Erreur lors de l\'envoi du message quotidien :', error);
+        try {
+			const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
+			const lastElementGaylord = await Users.findOne({
+				order: [['createdAt', 'DESC']],
+			});
+			let lastDateGaylord = lastElementGaylord.dataValues.createdAt;
+			if (checkIsWeek(lastDateGaylord)) {
+				console.log(`---- Last gaylord was ${lastElementGaylord.username} ----`)
+				const usersFiltered = members.filter(member => channel.members.has(member.id) && !member.user.bot);
+				const randomMember = usersFiltered.random();
+				const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
+				kickGaylordRole(currentRole, channel);
+				// add new gaylord
+				const { res } = await addNewGaylord(randomMember, currentRole);
+				const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
+				Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${res}`
+				await channel.send(message);
 			}
+		} catch (error) {
+			console.error('Erreur lors de l\'envoi du message quotidien :', error);
 		}
-	}, checkInterval);
+    }, {
+        timezone: "Europe/Paris" // Ajuster selon ton fuseau horaire
+    });
 }
 
 const checkIsWeek = (date) => {
