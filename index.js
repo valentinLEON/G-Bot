@@ -86,10 +86,10 @@ const removeDatabaseFile = () => {
 	});
 }
 
-console.log("Remove previous database file");
-if (fs.existsSync("database.sqlite")) {
-	removeDatabaseFile();
-}
+// console.log("Remove previous database file");
+// if (fs.existsSync("database.sqlite")) {
+// 	removeDatabaseFile();
+// }
 
 
 (async () => {
@@ -107,30 +107,30 @@ if (fs.existsSync("database.sqlite")) {
 	}
 })();
 
-const getAllOldMessages = async (channel, limit = 500) => {
-	const allMessages = [];
-	let last_id;
+// const getAllOldMessages = async (channel, limit = 500) => {
+// 	const allMessages = [];
+// 	let last_id;
 
-	while (true) {
-		const options = { limit: 100 };
-		if (last_id) {
-			options.before = last_id;
-		}
+// 	while (true) {
+// 		const options = { limit: 100 };
+// 		if (last_id) {
+// 			options.before = last_id;
+// 		}
 
-		const messages = await channel.messages.fetch(options);
-		messages.forEach(message => {
-			if (message.content.includes("n°")) {
-				allMessages.push(message);
-			}
-		});
-		last_id = messages.last().id;
+// 		const messages = await channel.messages.fetch(options);
+// 		messages.forEach(message => {
+// 			if (message.content.includes("n°")) {
+// 				allMessages.push(message);
+// 			}
+// 		});
+// 		last_id = messages.last().id;
 
-		if (messages.size != 100 || allMessages >= limit) {
-			break;
-		}
-	}
-	return allMessages;
-}
+// 		if (messages.size != 100 || allMessages >= limit) {
+// 			break;
+// 		}
+// 	}
+// 	return allMessages;
+// }
 
 const playSound = (guild) => {
 	const connection = joinVoiceChannel({
@@ -185,39 +185,39 @@ client.once(Events.ClientReady, async readyClient => {
 	console.log(`----- Lancement du random gaylord -----`);
 	triggerRandomGaylord(members, guild);
 
-	members = members.map(x => x.user).filter(x => x.bot === false);
-	if (oldMessages) {
-		try {
-			oldMessages.forEach(async message => {
-				const regex = /@([^@]+) n°/;
-				const match = message.content.match(regex);
-				if (match) {
-					const usernameRegex = match[1].replace(/[<>]/g, '').trim().toString();
-					if (usernameRegex) {
-						const member = members.filter(x => x.id == usernameRegex)[0];
-						const username = member?.globalName ? member?.globalName : member?.username;
-						const index = message.content.indexOf("n°");
-						const char = "n°";
-						const count = message.content.slice(index + char.length, index + char.length + 3).trim();
-						oldMessagesToAdd.push({
-							username: username,
-							usage_count: count
-						});
-					}
-				}
-			});
-			oldMessagesToAdd.sort((a, b) => a.usage_count - b.usage_count);
-			await Users.bulkCreate(oldMessagesToAdd);
-		} catch (error) {
-			console.log("Error while adding old messages", error)
-		}
-		console.log("All old messages added")
-	}
+	// members = members.map(x => x.user).filter(x => x.bot === false);
+	// if (oldMessages) {
+	// 	try {
+	// 		oldMessages.forEach(async message => {
+	// 			const regex = /@([^@]+) n°/;
+	// 			const match = message.content.match(regex);
+	// 			if (match) {
+	// 				const usernameRegex = match[1].replace(/[<>]/g, '').trim().toString();
+	// 				if (usernameRegex) {
+	// 					const member = members.filter(x => x.id == usernameRegex)[0];
+	// 					const username = member?.globalName ? member?.globalName : member?.username;
+	// 					const index = message.content.indexOf("n°");
+	// 					const char = "n°";
+	// 					const count = message.content.slice(index + char.length, index + char.length + 3).trim();
+	// 					oldMessagesToAdd.push({
+	// 						username: username,
+	// 						usage_count: count
+	// 					});
+	// 				}
+	// 			}
+	// 		});
+	// 		oldMessagesToAdd.sort((a, b) => a.usage_count - b.usage_count);
+	// 		await Users.bulkCreate(oldMessagesToAdd);
+	// 	} catch (error) {
+	// 		console.log("Error while adding old messages", error)
+	// 	}
+	// 	console.log("All old messages added")
+	// }
 	console.log(`Ready! Bot: ${readyClient.user.tag}`);
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	cron.schedule("57 19 * * *", async () => { // execute it each day at 19h
+	cron.schedule("20 20 * * *", async () => { // execute it each day at 20h20
 		console.log("Trigger random gaylord");
 		const GAYLORD_ROLE_ID = "1192208207565820017";
 
