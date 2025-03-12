@@ -217,7 +217,7 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	cron.schedule("45 19 * * *", async () => { // execute it each day at 19h
+	cron.schedule("50 19 * * *", async () => { // execute it each day at 19h
 		console.log("Trigger random gaylord");
 		const GAYLORD_ROLE_ID = "1192208207565820017";
 
@@ -238,6 +238,8 @@ const triggerRandomGaylord = (members, guild) => {
 				const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
 				Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${res}`
 				await channel.send(message);
+			} else {
+				console.log("No random gaylord today");
 			}
 		} catch (error) {
 			console.error('Erreur lors de l\'envoi du message quotidien :', error);
@@ -251,6 +253,7 @@ const checkIsWeek = (date) => {
 	const now = Date.now();
 	const dateC = new Date(date);
 	var diff = moment(now).diff(dateC, 'days');
+	console.log("diff", diff);
 	return diff >= 7;
 }
 
