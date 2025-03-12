@@ -217,7 +217,7 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	cron.schedule("50 19 * * *", async () => { // execute it each day at 19h
+	cron.schedule("57 19 * * *", async () => { // execute it each day at 19h
 		console.log("Trigger random gaylord");
 		const GAYLORD_ROLE_ID = "1192208207565820017";
 
