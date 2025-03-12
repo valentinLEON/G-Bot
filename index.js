@@ -219,7 +219,7 @@ client.once(Events.ClientReady, async readyClient => {
 const triggerRandomGaylord = (members, guild) => {
 	cron.schedule("28 20 * * *", async () => { // execute it each day at 20h20
 		console.log("Trigger random gaylord");
-		const GAYLORD_ROLE_ID = "1192208207565820017";
+		const GAYLORD_ROLE_ID = "1346157766938460210";
 
         try {
 			const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
