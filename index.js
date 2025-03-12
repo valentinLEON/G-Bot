@@ -179,8 +179,8 @@ client.once(Events.ClientReady, async readyClient => {
 	}
 
 	console.log("Récupération des anciens messages");
-	const oldMessages = await getAllOldMessages(channel);
-	const oldMessagesToAdd = [];
+	// const oldMessages = await getAllOldMessages(channel);
+	// const oldMessagesToAdd = [];
 
 	console.log(`----- Lancement du random gaylord -----`);
 	triggerRandomGaylord(members, guild);
