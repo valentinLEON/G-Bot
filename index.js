@@ -217,14 +217,14 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	cron.schedule("23 20 * * *", async () => { // execute it each day at 20h20
+	cron.schedule("28 20 * * *", async () => { // execute it each day at 20h20
 		console.log("Trigger random gaylord");
 		const GAYLORD_ROLE_ID = "1192208207565820017";
 
         try {
 			const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
 			const lastElementGaylord = await Users.findOne({
-				order: [['createdAt', 'DESC']],
+				order: [['usage_count', 'DESC']],
 			});
 			let lastDateGaylord = lastElementGaylord.dataValues.createdAt;
 			if (checkIsWeek(lastDateGaylord)) {
