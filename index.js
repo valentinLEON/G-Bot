@@ -217,9 +217,9 @@ client.once(Events.ClientReady, async readyClient => {
 });
 
 const triggerRandomGaylord = (members, guild) => {
-	cron.schedule("28 20 * * *", async () => { // execute it each day at 20h20
+	cron.schedule("30 20 * * *", async () => { // execute it each day at 20h20
 		console.log("Trigger random gaylord");
-		const GAYLORD_ROLE_ID = "1346157766938460210";
+		const GAYLORD_ROLE_ID = "1344689120856899626";
 
         try {
 			const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL);
@@ -234,9 +234,9 @@ const triggerRandomGaylord = (members, guild) => {
 				const currentRole = guild.roles.cache.find(role => role.name === 'Gay Lord');
 				kickGaylordRole(currentRole, channel);
 				// add new gaylord
-				const { res } = await addNewGaylord(randomMember, currentRole);
+				const lastNumberCount = await addNewGaylord(randomMember, currentRole);
 				const message = `Évènement spécial : Voici une semaine qu'aucun d'entre nous n'a été assez gay alors que le destin et le hasard choissisent le plus gay d'entre tous.\n
-				Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${res}`
+				Le nouveau ${roleMention(GAYLORD_ROLE_ID)} --> ${userMention(randomMember.user.id)} n°${lastNumberCount}`
 				await channel.send(message);
 			} else {
 				console.log("No random gaylord today");
@@ -245,7 +245,7 @@ const triggerRandomGaylord = (members, guild) => {
 			console.error('Erreur lors de l\'envoi du message quotidien :', error);
 		}
     }, {
-        timezone: "Europe/Paris" // Ajuster selon ton fuseau horaire
+        timezone: "Europe/Paris"
     });
 }
 
@@ -261,12 +261,12 @@ const addNewGaylord = async (user, role) => {
 	try {
 		await user.roles.add(role);
 		// get all gaylords and order by usage count asc
-		const res = await Users.count();
+		const totalCount = await Users.count();
 		const newUser = await Users.create({
 			username: user.user.globalName,
-			usage_count: res + 1
+			usage_count: totalCount + 1
 		});
-		return { res, newUser };
+		return newUser.usage_count;
 	} catch (error) {
 		console.error('Erreur lors de l\'ajout du nouveau gaylord :', error);
 	}
@@ -276,7 +276,7 @@ const handleGaylordCommand = async (interaction, command, user, role) => {
 	try {
 		const { newUser } = await addNewGaylord(user, role);
 		const citation = interaction.options.getString('message');
-		await command.execute(interaction, user, citation, role, newUser.id);
+		await command.execute(interaction, user, citation, role, newUser.usage_count);
 		console.log("------ Add new user ------");
 	} catch (error) {
 		console.error(error);
